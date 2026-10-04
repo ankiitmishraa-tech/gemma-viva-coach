@@ -2,28 +2,28 @@ import streamlit as st
 from google import genai
 from google.genai import types
 
-st.set_page_config(page_title="Gemma Viva Partner", page_icon="🎓", layout="centered")
+st.set_page_config(page_title="Gemma Viva Drill", page_icon="🎯", layout="centered")
 
-st.title("🎓 Gemma Concept & Viva Drill")
-st.caption("A rapid-fire technical viva partner powered by Google's open-weight Gemma model.")
+st.title("🎯 Gemma Concept & Viva Drill")
+st.caption("Built for a friend who needs rapid, interactive interview and conceptual viva practice.")
 
-# Sidebar API key
+# Secure API configuration
 api_key = st.sidebar.text_input("Enter Gemini/Gemma API Key", type="password")
 st.sidebar.markdown("[Get free API Key from Google AI Studio](https://aistudio.google.com/)")
 
 if not api_key:
-    st.info("👈 Please enter your API key in the sidebar to start practicing.")
+    st.info("👈 Please enter your API key in the sidebar to start your viva session.")
     st.stop()
 
 client = genai.Client(api_key=api_key)
 
 # Topic selector
-topic = st.sidebar.selectbox(
-    "Choose Subject:",
-    ["Computer Networks & Security", "Data Structures & Algorithms", "Operating Systems", "Aptitude & General Studies"]
+subject = st.sidebar.selectbox(
+    "Select Examination Domain:",
+    ["Computer Networks & Security", "Data Structures & Algorithms", "Operating Systems", "General Computer Science"]
 )
 
-# Chat history
+# Chat state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -31,21 +31,21 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
 
-if prompt := st.chat_input("Answer here or type 'Start' to begin the viva..."):
+if prompt := st.chat_input("Answer the question or type 'Start' to begin..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     sys_instruction = f"""
-    You are a strict yet helpful technical viva examiner specializing in '{topic}'.
-    Your goal is to test the student's conceptual clarity one question at a time.
+    You are an expert oral exam and viva examiner specializing in '{subject}'.
+    Your objective is to test conceptual clarity one question at a time.
     Rules:
-    1. If the user says 'Start', ask the first crisp conceptual question.
-    2. When the user answers, evaluate immediately:
-       - State whether it is Correct, Partially Correct, or Needs Work.
-       - Give a 1-2 sentence concise correction if needed.
-       - Immediately ask the NEXT sequential follow-up question.
-    3. Keep responses compact and rapid-fire (under 4-5 sentences).
+    1. If the user begins or says 'Start', ask the first crisp conceptual question.
+    2. When the user responds:
+       - Give an immediate verdict: [Correct / Partially Correct / Incorrect].
+       - If flawed, provide a concise 1-2 sentence explanation.
+       - Immediately pose the NEXT logical question.
+    3. Keep responses tight, fast-paced, and encouraging (under 4-5 sentences).
     """
 
     history = [m["content"] for m in st.session_state.messages]
@@ -56,7 +56,7 @@ if prompt := st.chat_input("Answer here or type 'Start' to begin the viva..."):
             contents=history,
             config=types.GenerateContentConfig(
                 system_instruction=sys_instruction,
-                temperature=0.7,
+                temperature=0.6,
             )
         )
         reply = response.text
