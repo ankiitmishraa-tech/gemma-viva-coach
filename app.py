@@ -1,7 +1,6 @@
 import streamlit as st
 import os
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 
 st.set_page_config(page_title="Gemma Viva Drill", page_icon="🎯", layout="centered")
 
@@ -11,7 +10,7 @@ st.caption("Built for a friend who needs rapid, interactive interview and concep
 # Fetch API key directly from environment (Render)
 api_key = os.environ.get("GEMINI_API_KEY")
 
-# Fallback to sidebar only if environment variable is not configured
+# Fallback to sidebar if environment variable is not configured
 if not api_key:
     api_key = st.sidebar.text_input("Enter Gemini/Gemma API Key", type="password")
 
@@ -19,7 +18,7 @@ if not api_key:
     st.info("👈 Please configure GEMINI_API_KEY or enter your key in the sidebar.")
     st.stop()
 
-client = genai.Client(api_key=api_key)
+genai.configure(api_key=api_key)
 
 # Topic selector
 subject = st.sidebar.selectbox(
@@ -44,7 +43,7 @@ if prompt := st.chat_input("Answer the question or type 'Start' to begin..."):
     You are an expert technical viva examiner specializing in '{subject}'.
     Your objective is to test conceptual clarity one question at a time.
     Rules:
-    1. If the user begins or says 'Start', ask the first crisp conceptual question.
+    1. If the user begins or says 'Start' or 'hi', ask the first crisp conceptual question.
     2. When the user responds:
        - Give an immediate verdict: [Correct / Partially Correct / Incorrect].
        - If flawed, provide a concise 1-2 sentence explanation.
@@ -52,17 +51,20 @@ if prompt := st.chat_input("Answer the question or type 'Start' to begin..."):
     3. Keep responses tight, fast-paced, and encouraging (under 4-5 sentences).
     """
 
-    history = [m["content"] for m in st.session_state.messages]
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",
+        system_instruction=sys_instruction
+    )
+
+    # Format history
+    history_payload = []
+    for m in st.session_state.messages[:-1]:
+        role = "user" if m["role"] == "user" else "model"
+        history_payload.append({"role": role, "parts": [m["content"]]})
 
     try:
-        response = client.models.generate_content(
-            model="gemini-1.5-flash",
-            contents=history,
-            config=types.GenerateContentConfig(
-                system_instruction=sys_instruction,
-                temperature=0.6,
-            )
-        )
+        chat = model.start_chat(history=history_payload)
+        response = chat.send_message(prompt)
         reply = response.text
     except Exception as e:
         reply = f"Error: {e}"
