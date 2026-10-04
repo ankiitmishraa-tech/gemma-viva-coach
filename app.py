@@ -52,7 +52,7 @@ if prompt := st.chat_input("Answer the question or type 'Start' to begin..."):
 
     try:
         response = client.models.generate_content(
-            model="gemma-2-9b-it",
+            model="gemini-1.5-flash",
             contents=history,
             config=types.GenerateContentConfig(
                 system_instruction=sys_instruction,
