@@ -1,4 +1,5 @@
 import streamlit as st
+import os
 from google import genai
 from google.genai import types
 
@@ -7,12 +8,15 @@ st.set_page_config(page_title="Gemma Viva Drill", page_icon="🎯", layout="cent
 st.title("🎯 Gemma Concept & Viva Drill")
 st.caption("Built for a friend who needs rapid, interactive interview and conceptual viva practice.")
 
-# Secure API configuration
-api_key = st.sidebar.text_input("Enter Gemini/Gemma API Key", type="password")
-st.sidebar.markdown("[Get free API Key from Google AI Studio](https://aistudio.google.com/)")
+# Fetch API key directly from environment (Render)
+api_key = os.environ.get("GEMINI_API_KEY")
+
+# Fallback to sidebar only if environment variable is not configured
+if not api_key:
+    api_key = st.sidebar.text_input("Enter Gemini/Gemma API Key", type="password")
 
 if not api_key:
-    st.info("👈 Please enter your API key in the sidebar to start your viva session.")
+    st.info("👈 Please configure GEMINI_API_KEY or enter your key in the sidebar.")
     st.stop()
 
 client = genai.Client(api_key=api_key)
@@ -37,7 +41,7 @@ if prompt := st.chat_input("Answer the question or type 'Start' to begin..."):
         st.markdown(prompt)
 
     sys_instruction = f"""
-    You are an expert oral exam and viva examiner specializing in '{subject}'.
+    You are an expert technical viva examiner specializing in '{subject}'.
     Your objective is to test conceptual clarity one question at a time.
     Rules:
     1. If the user begins or says 'Start', ask the first crisp conceptual question.
